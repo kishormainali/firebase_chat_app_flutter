@@ -1,4 +1,4 @@
-# mvvm_architecture
+# Chat App
 
 Chat App Using Flutter And Firebase
 
