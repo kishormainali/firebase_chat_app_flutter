@@ -52,15 +52,20 @@ class ChatView extends StatelessWidget {
                           return Align(
                             alignment: Alignment.bottomCenter,
                             child: ListView.builder(
+                                key: PageStorageKey("chat-page-key"),
                                 shrinkWrap: true,
                                 padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                                 itemCount: data.length,
                                 itemBuilder: (context, index) {
                                   final chat = data[index];
                                   final isMe = chat.uid == model.userId;
+                                  final isFirstItem = _getFirstMessage(data, index);
+                                  final isLastItem = _getLastMessage(data, index);
                                   return ChatItem(
                                     chat: chat,
                                     isMe: isMe,
+                                    isFirstItem: isFirstItem,
+                                    isLastItem: isLastItem,
                                   );
                                 }),
                           );
@@ -73,13 +78,15 @@ class ChatView extends StatelessWidget {
                   ),
                   SafeArea(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5.0),
                       child: Row(
                         children: [
                           Expanded(
                               child: TextField(
                             controller: model.chatController,
                             autocorrect: false,
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: (value) => model.onSendButtonPressed(userModel),
                             decoration: InputDecoration(
                               contentPadding: const EdgeInsets.symmetric(horizontal: 20.0),
                               border: OutlineInputBorder(
@@ -92,7 +99,9 @@ class ChatView extends StatelessWidget {
                             icon: Icon(
                               FlutterIcons.send_circle_mco,
                             ),
-                            onPressed: () => model.onSendButtonPressed(userModel),
+                            onPressed: () {
+                              model.onSendButtonPressed(userModel);
+                            },
                           )
                         ],
                       ),
@@ -103,16 +112,30 @@ class ChatView extends StatelessWidget {
         },
         viewModelBuilder: () => getIt<ChatViewModel>());
   }
+
+  _getFirstMessage(List<ChatModel> chatItems, int index) {
+    return (chatItems[index].peerId != chatItems[(index - 1 < 0 ? 0 : index - 1)].peerId) || index == 0;
+  }
+
+  _getLastMessage(List<ChatModel> chatItems, int index) {
+    int maxItem = chatItems.length - 1;
+    return (chatItems[index].peerId != chatItems[(index + 1 > maxItem ? maxItem : index + 1)].peerId) ||
+        index == maxItem;
+  }
 }
 
 class ChatItem extends StatelessWidget {
   final ChatModel chat;
   final bool isMe;
+  final bool isFirstItem;
+  final bool isLastItem;
 
   const ChatItem({
     Key key,
     @required this.chat,
     @required this.isMe,
+    @required this.isFirstItem,
+    @required this.isLastItem,
   }) : super(key: key);
   @override
   Widget build(BuildContext context) {
@@ -120,25 +143,32 @@ class ChatItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
       children: [
-        if (!isMe) ...[
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: CircleAvatar(
-              radius: 24.0,
-              backgroundColor: Colors.deepOrange.withOpacity(0.8),
-              child: Center(
-                child: Text(
-                  chat.username.shortName,
-                  style: TextStyle(
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+        isFirstItem && !isMe
+            ? Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Container(
+                  width: 45.0,
+                  height: 45.0,
+                  decoration: BoxDecoration(
+                    color: Colors.deepOrange.withOpacity(0.8),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      chat.username.shortName,
+                      style: TextStyle(
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
+              )
+            : Container(
+                width: 50.0,
+                height: 50.0,
               ),
-            ),
-          ),
-        ],
         Container(
           constraints: BoxConstraints(
             maxWidth: MediaQuery.of(context).size.width * .6,
@@ -151,10 +181,10 @@ class ChatItem extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.only(
-                    topLeft: isMe ? Radius.circular(20.0) : Radius.zero,
+                    topLeft: Radius.circular(20.0),
                     topRight: Radius.circular(20.0),
+                    bottomRight: Radius.circular(20.0),
                     bottomLeft: Radius.circular(20.0),
-                    bottomRight: isMe ? Radius.zero : Radius.circular(20.0),
                   ),
                   color: Colors.blue,
                 ),
@@ -166,16 +196,17 @@ class ChatItem extends StatelessWidget {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Text(
-                  '${chat.createdAt.toTime}',
-                  style: TextStyle(
-                    fontSize: 12.0,
-                    color: Colors.black.withOpacity(0.4),
+              if (isLastItem)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Text(
+                    '${chat.createdAt.toTime}',
+                    style: TextStyle(
+                      fontSize: 12.0,
+                      color: Colors.black.withOpacity(0.4),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),
