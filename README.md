@@ -4,13 +4,10 @@ Chat App Using Flutter And Firebase
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+- Create a project in firebase console and add your ios and android project
+- enable firestore and authentication
+- enable email and google signin under authentication
+- download firebase config files 
+- for android: copy `google-services.json` file into /android/app/ directory
+- for ios: open ios module on xcode and click `Add File To Runner` then select `GoogleService-Info.plist` check `copy file if needed` check box
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
